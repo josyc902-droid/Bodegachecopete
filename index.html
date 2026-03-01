@@ -86,7 +86,30 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const ID = "CHECOPETE01";
+        const ID = // Reemplaza la función cerrarSesion por esta:
+window.cerrarSesion = () => {
+    const confirmar = confirm("¿Cerrar sesión de esta bodega?");
+    if (confirmar) {
+        localStorage.removeItem('idBodega'); // Esto borra la bodega actual
+        location.reload(); // Al recargar, el sistema pedirá el nuevo nombre
+    }
+};
+        
+    localStorage.removeItem('idBodega'); // Borra solo la bodega actual
+    location.reload(); // Recarga para pedir la nueva
+};
+
+// Agrega esto justo debajo de donde dice const ID = ...
+const bodegaGuardada = localStorage.getItem('idBodega');
+if (!bodegaGuardada) {
+    const nuevaBodega = prompt("INGRESE EL NOMBRE DE LA BODEGA (Ej: CHECOPETE01):");
+    if (nuevaBodega) {
+        localStorage.setItem('idBodega', nuevaBodega.toUpperCase());
+        location.reload();
+    }
+}
+const ID = bodegaGuardada || "CHECOPETE01";
+        
         let carrito = [];
 
         onSnapshot(doc(db, "ajustes", ID), (d) => { if(d.exists()) { document.getElementById('tasaBCV').value = d.data().tasa; renderizar(); } });
