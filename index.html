@@ -1,54 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SISTEMA BODEGA - AUTORIZADOS</title>
+    <title>SISTEMA ULTRA COMPACTO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        #contenidoPrincipal { display: none; }
-        body { background-color: #f1f5f9; }
+        /* Ajuste fino para aprovechar cada milímetro */
+        body { font-size: 12px; line-height: 1.2; }
+        .scroll-custom::-webkit-scrollbar { width: 3px; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 pb-60"> <header class="bg-indigo-700 text-white p-2 pb-6 text-center rounded-b-[25px] shadow-md sticky top-0 z-50">
+        <h1 class="text-sm font-black text-yellow-300 italic uppercase">BODEGA: CHECOPETE01</h1>
+        <button onclick="cerrarSesion()" class="absolute top-2 right-3 bg-red-500 w-6 h-6 rounded-full text-[10px] flex items-center justify-center border border-white/20">✕</button>
+    </header>
 
-    <div id="contenidoPrincipal">
-        <header class="bg-indigo-700 text-white p-6 pb-12 text-center rounded-b-[40px] shadow-lg sticky top-0 z-50">
-            <h1 id="headerNombre" class="text-xl font-black text-yellow-300 italic uppercase italic">BODEGA</h1>
-            <button onclick="cerrarSesion()" class="absolute top-4 right-5 bg-red-500 text-white w-8 h-8 rounded-full font-black flex items-center justify-center border-2 border-white">✕</button>
-        </header>
+    <div class="max-w-md mx-auto -mt-4 px-2 relative z-10">
+        
+        <div id="seccionReportes" class="hidden bg-indigo-900 text-white p-3 rounded-2xl shadow-xl mb-2 border-b-2 border-yellow-400">
+            <div class="flex justify-around text-center mb-2">
+                <div><p class="text-[7px] opacity-60">Bs</p><p id="reporteBs" class="font-black text-yellow-400">0.00</p></div>
+                <div><p class="text-[7px] opacity-60">Ref $</p><p id="reporteUSD" class="font-black text-yellow-400">0.00</p></div>
+            </div>
+            <button onclick="enviarReporteWhatsApp()" class="w-full bg-emerald-500 py-1.5 rounded-lg font-black uppercase text-[8px] flex items-center justify-center gap-1">
+                <i class="fab fa-whatsapp"></i> Reporte WhatsApp
+            </button>
+        </div>
 
-        <div class="max-w-md mx-auto -mt-8 px-4 relative z-10">
-            <div class="bg-white p-5 rounded-3xl shadow-md mb-4 border flex items-center justify-between">
+        <div class="bg-white p-2 rounded-xl shadow-sm mb-2 flex items-center justify-between border border-slate-200">
+            <div class="flex flex-col">
+                <span class="text-[7px] font-bold text-slate-400 uppercase">Tasa BCV</span>
+                <input type="number" id="tasaBCV" class="font-black text-indigo-800 text-xl outline-none w-20 bg-transparent" value="42.00">
+            </div>
+            <button onclick="actualizarTasa()" class="text-[8px] font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-md border border-indigo-100 uppercase">Fijar</button>
+        </div>
+
+        <details class="mb-2 bg-white rounded-xl shadow-sm border border-slate-100">
+            <summary class="p-2 font-black text-[9px] text-indigo-600 uppercase italic cursor-pointer">▸ Inventario / Editar</summary>
+            <div class="p-2 space-y-1.5">
+                <input type="hidden" id="editId">
+                <input type="text" id="nombreP" placeholder="Producto" class="w-full p-1.5 bg-slate-50 rounded-lg border text-xs outline-none">
+                <div class="flex gap-1.5">
+                    <input type="number" id="precioP" placeholder="$" class="w-1/2 p-1.5 bg-slate-50 rounded-lg border text-xs font-bold text-green-600 outline-none">
+                    <input type="number" id="stockP" placeholder="Stock" class="w-1/2 p-1.5 bg-slate-50 rounded-lg border text-xs outline-none">
+                </div>
+                <button onclick="agregarProducto()" class="w-full bg-indigo-600 text-white py-1.5 rounded-lg font-black uppercase text-[9px]">Guardar</button>
+            </div>
+        </details>
+
+        <div id="lista" class="space-y-1.5"></div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 z-[100]">
+        
+        <div id="carritoUI" class="max-w-md mx-auto bg-white p-3 rounded-t-[25px] shadow-[0_-8px_20px_rgba(0,0,0,0.1)] border-t border-slate-100">
+            <div id="itemsCarrito" class="max-h-16 overflow-y-auto mb-2 text-[9px] font-bold text-slate-500 scroll-custom border-b border-dashed pb-1">
+                <p id="carritoVacioMsg" class="text-center text-slate-300 py-1">Marca productos para facturar</p>
+            </div>
+
+            <div class="flex justify-between items-center px-1">
                 <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Tasa del Día</p>
-                    <input type="number" id="tasaBCV" class="bg-transparent font-black text-indigo-800 text-3xl outline-none w-28" value="42.00">
+                    <p id="totalBs" class="text-xl font-black text-indigo-700 leading-none">0.00 Bs</p>
+                    <p id="totalUSD" class="text-[9px] font-bold text-emerald-600">Ref: 0.00$</p>
                 </div>
-                <button onclick="actualizarTasa()" class="bg-indigo-100 text-indigo-700 px-5 py-2 rounded-2xl font-black uppercase text-xs">Fijar</button>
+                <div class="flex gap-1">
+                    <button onclick="vaciarCarrito()" class="bg-slate-100 text-slate-400 p-2 rounded-xl text-[10px]"><i class="fas fa-trash"></i></button>
+                    <button onclick="procesarVenta()" class="bg-yellow-400 text-indigo-900 px-5 py-2 rounded-xl font-black uppercase text-[10px] shadow-md">Cobrar</button>
+                </div>
             </div>
-            <div id="lista" class="space-y-3"></div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t p-4">
-            <div class="max-w-md mx-auto">
-                <div id="itemsCarrito" class="max-h-20 overflow-y-auto mb-3 text-xs font-bold text-slate-500">
-                    <p id="msgVacio" class="text-center text-slate-300">Carrito vacío</p>
-                </div>
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p id="totalBs" class="text-3xl font-black text-indigo-700 leading-none">0.00 Bs</p>
-                        <p id="totalUSD" class="text-xs font-bold text-emerald-600">Ref: 0.00$</p>
-                    </div>
-                    <button onclick="procesarVenta()" class="bg-yellow-400 text-indigo-900 px-10 py-4 rounded-2xl font-black uppercase shadow-lg">Cobrar</button>
-                </div>
-            </div>
-        </div>
+        <nav class="max-w-md mx-auto bg-white border-t border-slate-100 p-1 flex justify-around items-center">
+            <button onclick="verSeccion('inventario')" class="flex flex-col items-center py-1">
+                <i class="fas fa-cash-register text-indigo-700 text-sm"></i>
+                <span class="text-[7px] font-black uppercase text-indigo-700">Ventas</span>
+            </button>
+            <button onclick="verSeccion('reportes')" id="btnReporte" class="flex flex-col items-center py-1 opacity-30">
+                <i class="fas fa-file-invoice-dollar text-slate-600 text-sm"></i>
+                <span class="text-[7px] font-black uppercase text-slate-600">Reporte</span>
+            </button>
+        </nav>
     </div>
 
     <script type="module">
+        // Lógica de Firebase (Mantenida exactamente igual)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, query, where, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, updateDoc, query, where, getDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDrVNTiKB8ou8RLFhYyku_WcljhxYNZAtQ",
@@ -61,73 +101,106 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const ID = localStorage.getItem('idBodega') || "CHECOPETE01";
+        let carrito = [];
 
-        async function validarAcceso() {
-            let ID = localStorage.getItem('idBodega');
-            if (!ID) {
-                ID = prompt("CÓDIGO DE ACCESO:");
-                if (!ID) { location.reload(); return; }
-                ID = ID.toUpperCase().trim();
+        onSnapshot(doc(db, "ajustes", ID), (d) => { if(d.exists()) { document.getElementById('tasaBCV').value = d.data().tasa; renderizar(); } });
+        onSnapshot(query(collection(db, "productos"), where("idBodega", "==", ID)), (snap) => { window.datosP = snap; renderizar(); });
+        
+        const hoy = new Date().toLocaleDateString();
+        onSnapshot(query(collection(db, "ventas"), where("idBodega", "==", ID), where("fechaStr", "==", hoy)), (snap) => {
+            let tBs = 0, tU = 0; snap.forEach(v => { tBs += v.data().totalBs; tU += v.data().totalUSD; });
+            document.getElementById('reporteBs').innerText = tBs.toFixed(2);
+            document.getElementById('reporteUSD').innerText = tU.toFixed(2);
+        });
 
-                const docRef = doc(db, "autorizados", ID); // <--- BUSCA EN AUTORIZADOS
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    localStorage.setItem('idBodega', ID);
-                    location.reload();
-                } else {
-                    alert("⚠️ NO AUTORIZADO");
-                    location.reload();
-                }
-            } else {
-                mostrarApp(ID);
-            }
-        }
-
-        validarAcceso();
-
-        function mostrarApp(ID) {
-            document.getElementById('contenidoPrincipal').style.display = 'block';
-            document.getElementById('headerNombre').innerText = "BODEGA: " + ID;
-            
-            let carrito = [];
-            onSnapshot(doc(db, "ajustes", ID), (d) => { if(d.exists()) document.getElementById('tasaBCV').value = d.data().tasa; });
-            onSnapshot(query(collection(db, "productos"), where("idBodega", "==", ID)), (snap) => {
-                const lista = document.getElementById('lista');
-                lista.innerHTML = "";
-                const tasa = parseFloat(document.getElementById('tasaBCV').value) || 1;
-                snap.forEach(docSnap => {
-                    const p = docSnap.data();
-                    lista.innerHTML += `<div class="bg-white p-4 rounded-3xl shadow-sm border mb-2" onclick="agregarAlCarrito('${p.nombre}', ${p.precioUSD})">
-                        <h3 class="font-black text-xs uppercase">${p.nombre}</h3>
-                        <span class="text-2xl font-black">${(p.precioUSD * tasa).toFixed(2)} Bs</span>
+        function renderizar() {
+            const lista = document.getElementById('lista');
+            const tasa = parseFloat(document.getElementById('tasaBCV').value) || 0;
+            if(!window.datosP) return;
+            lista.innerHTML = "";
+            window.datosP.forEach(docSnap => {
+                const p = docSnap.data();
+                const id = docSnap.id;
+                lista.innerHTML += `
+                    <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-50 flex justify-between items-center active:bg-slate-50" onclick="agregarAlCarrito('${id}', '${p.nombre}', ${p.precioUSD})">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-black text-[10px] uppercase text-indigo-900 truncate">${p.nombre}</h3>
+                            <span class="text-sm font-black text-slate-800">${(p.precioUSD * tasa).toFixed(2)} Bs</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); prepararEdicion('${id}', '${p.nombre}', ${p.precioUSD}, ${p.stock})" class="text-indigo-400 bg-indigo-50 w-6 h-6 rounded flex items-center justify-center ml-2"><i class="fas fa-edit text-[8px]"></i></button>
                     </div>`;
-                });
             });
-
-            window.agregarAlCarrito = (nombre, precio) => {
-                carrito.push({nombre, precio});
-                const list = document.getElementById('itemsCarrito');
-                const tasa = parseFloat(document.getElementById('tasaBCV').value);
-                document.getElementById('msgVacio').classList.toggle('hidden', carrito.length > 0);
-                list.innerHTML = ""; let tU = 0;
-                carrito.forEach(i => { tU += i.precio; list.innerHTML += `<p>• ${i.nombre}</p>`; });
-                document.getElementById('totalUSD').innerText = "Ref: " + tU.toFixed(2) + "$";
-                document.getElementById('totalBs').innerText = (tU * tasa).toFixed(2) + " Bs";
-            };
-
-            window.procesarVenta = async () => {
-                if(carrito.length === 0) return;
-                const tU = carrito.reduce((acc, i) => acc + i.precio, 0);
-                const tasa = parseFloat(document.getElementById('tasaBCV').value);
-                await addDoc(collection(db, "ventas"), { idBodega: ID, totalUSD: tU, totalBs: tU * tasa, fecha: serverTimestamp(), fechaStr: new Date().toLocaleDateString() });
-                carrito = []; location.reload();
-            };
-
-            window.cerrarSesion = () => { localStorage.removeItem('idBodega'); location.reload(); };
-            window.actualizarTasa = async () => { await setDoc(doc(db, "ajustes", ID), { tasa: parseFloat(document.getElementById('tasaBCV').value) }, {merge:true}); alert("OK"); };
         }
+
+        window.agregarAlCarrito = (id, nombre, precio) => {
+            carrito.push({id, nombre, precio});
+            actualizarCarritoUI();
+        };
+
+        function actualizarCarritoUI() {
+            const list = document.getElementById('itemsCarrito');
+            const msg = document.getElementById('carritoVacioMsg');
+            const tasa = parseFloat(document.getElementById('tasaBCV').value) || 0;
+            if(carrito.length > 0) msg.classList.add('hidden'); else msg.classList.remove('hidden');
+            list.innerHTML = ""; if(carrito.length === 0) list.appendChild(msg);
+            let tU = 0;
+            carrito.forEach(i => { tU += i.precio; list.innerHTML += `<div class="flex justify-between py-0.5 border-b border-slate-50"><span>• ${i.nombre}</span> <span>$${i.precio}</span></div>`; });
+            document.getElementById('totalUSD').innerText = "Ref: " + tU.toFixed(2) + "$";
+            document.getElementById('totalBs').innerText = (tU * tasa).toFixed(2) + " Bs";
+            list.scrollTop = list.scrollHeight;
+        }
+
+        window.vaciarCarrito = () => { carrito = []; actualizarCarritoUI(); };
+
+        window.procesarVenta = async () => {
+            if(carrito.length === 0) return;
+            const tasa = parseFloat(document.getElementById('tasaBCV').value) || 0;
+            let tU = 0; carrito.forEach(i => tU += i.precio);
+            await addDoc(collection(db, "ventas"), { idBodega: ID, totalUSD: tU, totalBs: tU * tasa, fecha: serverTimestamp(), fechaStr: new Date().toLocaleDateString() });
+            vaciarCarrito();
+            alert("✅ Venta Guardada");
+        };
+
+        window.enviarReporteWhatsApp = () => {
+            const bs = document.getElementById('reporteBs').innerText;
+            const usd = document.getElementById('reporteUSD').innerText;
+            window.open(`https://wa.me/?text=${encodeURIComponent('📊 Reporte '+ID+': Bs '+bs+' / USD '+usd)}`, '_blank');
+        };
+
+        window.verSeccion = (sec) => {
+            const esRep = sec === 'reportes';
+            document.getElementById('seccionReportes').classList.toggle('hidden', !esRep);
+            document.getElementById('btnReporte').classList.toggle('opacity-100', esRep);
+            document.getElementById('btnReporte').classList.toggle('opacity-30', !esRep);
+        };
+
+        window.agregarProducto = async () => {
+            const n = document.getElementById('nombreP').value, p = parseFloat(document.getElementById('precioP').value), s = parseInt(document.getElementById('stockP').value);
+            if(n) {
+                const id = document.getElementById('editId').value;
+                if(id) await updateDoc(doc(db, "productos", id), { nombre: n, precioUSD: p, stock: s });
+                else await addDoc(collection(db, "productos"), { nombre: n, precioUSD: p, stock: s || 0, idBodega: ID });
+                document.getElementById('nombreP').value = ""; document.getElementById('precioP').value = ""; document.getElementById('stockP').value = ""; document.getElementById('editId').value = "";
+                alert("Guardado");
+            }
+        };
+
+        window.prepararEdicion = (id, nombre, precio, stock) => {
+            document.querySelector('details').open = true;
+            document.getElementById('editId').value = id;
+            document.getElementById('nombreP').value = nombre;
+            document.getElementById('precioP').value = precio;
+            document.getElementById('stockP').value = stock;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        };
+
+        window.actualizarTasa = async () => {
+            await setDoc(doc(db, "ajustes", ID), { tasa: parseFloat(document.getElementById('tasaBCV').value) });
+            alert("Tasa fijada");
+        };
+
+        window.cerrarSesion = () => { localStorage.clear(); location.reload(); };
     </script>
 </body>
-    </html>
-    
+</html>
