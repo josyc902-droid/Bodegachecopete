@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BODEGA: CHECOPETE01</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-size: 13px; background-color: #f1f5f9; }
+        #itemsCarrito::-webkit-scrollbar { width: 4px; }
+        #itemsCarrito::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="pb-72">
+
+    <header class="bg-indigo-700 text-white p-4 pb-10 text-center rounded-b-[35px] shadow-lg sticky top-0 z-50">
+        <h1 class="text-base font-black text-yellow-300 italic uppercase">BODEGA: CHECOPETE01</h1>
+        <button onclick="localStorage.clear(); location.reload();" class="absolute top-3 right-4 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center">✕</button>
+    </header>
+
+    <div class="max-w-md mx-auto -mt-6 px-3 relative z-10">
+        <div id="seccionReportes" class="hidden bg-indigo-900 text-white p-4 rounded-3xl shadow-xl mb-4 border-b-4 border-yellow-400">
+            <div class="grid grid-cols-2 gap-3 text-center mb-4">
+                <div><p class="text-[8px] uppercase opacity-60">Total Bs</p><p id="reporteBs" class="text-lg font-black text-yellow-300">0.00</p></div>
+                <div><p class="text-[8px] uppercase opacity-60">Total $</p><p id="reporteUSD" class="text-lg font-black text-yellow-300">0.00</p></div>
+            </div>
+            <button onclick="window.open('https://wa.me/?text='+encodeURIComponent('📊 Reporte: Bs '+document.getElementById('reporteBs').innerText+' / USD '+document.getElementById('reporteUSD').innerText))" class="w-full bg-emerald-500 py-3 rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2">
+                <i class="fab fa-whatsapp text-lg"></i> Enviar Reporte
+            </button>
+        </div>
+
+        <div class="bg-white p-4 rounded-[30px] shadow-md mb-4 border flex items-center justify-between mt-8">
+            <input type="number" id="tasaBCV" class="font-black text-indigo-800 text-3xl outline-none w-32" value="42.00">
+            <button onclick="actualizarTasa()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Fijar Tasa ✅</button>
+        </div>
+
+        <details class="mb-4 bg-white rounded-2xl shadow-sm border overflow-hidden">
+            <summary class="p-3 font-black text-[10px] text-indigo-600 uppercase bg-slate-50 italic">▸ Gestionar Inventario (+)</summary>
+            <div class="p-3 space-y-2">
+                <input type="hidden" id="editId">
+                <input type="text" id="nombreP" placeholder="Producto" class="w-full p-2 bg-slate-50 rounded-lg border text-xs">
+                <div class="flex gap-2">
+                    <input type="number" id="precioP" placeholder="Precio $" class="w-1/2 p-2 bg-slate-50 rounded-lg border text-xs font-bold text-green-600">
+                    <input type="number" id="stockP" placeholder="Stock" class="w-1/2 p-2 bg-slate-50 rounded-lg border text-xs font-bold">
+                </div>
+                <button onclick="agregarProducto()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-black uppercase text-[10px]">Guardar</button>
+            </div>
+        </details>
+
+        <div id="lista" class="space-y-3"></div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 z-[100]">
+        <div class="max-w-md mx-auto bg-white p-4 rounded-t-[40px] shadow-2xl border-t">
+            <div id="itemsCarrito" class="max-h-24 overflow-y-auto mb-2 text-[11px] font-bold text-slate-500 min-h-[30px]">
+                <p id="carritoVacioMsg" class="text-center text-slate-300 py-2 italic">Sin productos marcados</p>
+            </div>
+            <div class="flex justify-between items-center border-t pt-3">
+                <div>
+                    <p id="totalBs" class="text-3xl font-black text-indigo-700 leading-none">0.00 Bs</p>
+                    <p id="totalUSD" class="text-[11px] font-bold text-emerald-600">Ref: 0.00$</p>
+                </div>
+                <button onclick="procesarVenta()" class="bg-yellow-400 text-indigo-900 px-8 py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Cobrar</button>
+            </div>
+        </div>
+
+        <nav class="max-w-md mx-auto bg-white border-t p-2 flex justify-around">
+            <button onclick="document.getElementById('seccionReportes').classList.add('hidden')" class="flex flex-col items-center"><i class="fas fa-cash-register text-indigo-700"></i><span class="text-[8px] font-black uppercase">Ventas</span></button>
+            <button onclick="document.getElementById('seccionReportes').classList.remove('hidden')" class="flex flex-col items-center opacity-40"><i class="fas fa-file-invoice-dollar"></i><span class="text-[8px] font-black uppercase">Reporte</span></button>
+        </nav>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, updateDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrVNTiKB8ou8RLFhYyku_WcljhxYNZAtQ",
+            authDomain: "la-bodega-de-checopete.firebaseapp.com",
+            projectId: "la-bodega-de-checopete",
+            storageBucket: "la-bodega-de-checopete.firebasestorage.app",
+            messagingSenderId: "103184923666",
+            appId: "1:103184923666:web:d38b3be10cb85f73a9accb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const ID = "CHECOPETE01";
+        let carrito = [];
+
+        onSnapshot(doc(db, "ajustes", ID), (d) => { if(d.exists()) { document.getElementById('tasaBCV').value = d.data().tasa; renderizar(); } });
+        onSnapshot(query(collection(db, "productos"), where("idBodega", "==", ID)), (snap) => { window.datosP = snap; renderizar(); });
+        
+        onSnapshot(query(collection(db, "ventas"), where("idBodega", "==", ID), where("fechaStr", "==", new Date().toLocaleDateString())), (snap) => {
+            let tBs = 0, tU = 0; snap.forEach(v => { tBs += v.data().totalBs; tU += v.data().totalUSD; });
+            document.getElementById('reporteBs').innerText = tBs.toFixed(2);
+            document.getElementById('reporteUSD').innerText = tU.toFixed(2);
+        });
+
+        function renderizar() {
+            const lista = document.getElementById('lista');
+            const tasa = parseFloat(document.getElementById('tasaBCV').value) || 0;
+            if(!window.datosP) return;
+            lista.innerHTML = "";
+            window.datosP.forEach(docSnap => {
+                const p = docSnap.data();
+                lista.innerHTML += `<div class="bg-white p-4 rounded-3xl shadow-sm border flex justify-between items-center" onclick="agregarAlCarrito('${docSnap.id}', '${p.nombre}', ${p.precioUSD})">
+                    <div><h3 class="font-black text-[11px] uppercase text-indigo-900">${p.nombre}</h3><p class="text-[9px] font-bold text-emerald-600">Ref: ${p.precioUSD}$</p><span class="text-xl font-black">${(p.precioUSD * tasa).toFixed(2)} Bs</span></div>
+                    <button onclick="event.stopPropagation(); prepararEdicion('${docSnap.id}', '${p.nombre}', ${p.precioUSD}, ${p.stock})" class="text-indigo-400 bg-indigo-50 w-8 h-8 rounded-lg"><i class="fas fa-edit"></i></button>
+                </div>`;
+            });
+        }
+
+        window.agregarAlCarrito = (id, nombre, precio) => {
+            carrito.push({id, nombre, precio});
+            const list = document.getElementById('itemsCarrito');
+            document.getElementById('carritoVacioMsg').classList.add('hidden');
+            list.innerHTML = ""; let tU = 0;
+            carrito.forEach(i => { tU += i.precio; list.innerHTML += `<div class="flex justify-between border-b py-1"><span>• ${i.nombre}</span> <span>$${i.precio}</span></div>`; });
+            document.getElementById('totalUSD').innerText = "Ref: " + tU.toFixed(2) + "$";
+            document.getElementById('totalBs').innerText = (tU * parseFloat(document.getElementById('tasaBCV').value)).toFixed(2) + " Bs";
+            list.scrollTop = list.scrollHeight;
+        };
+
+        window.procesarVenta = async () => {
+            if(carrito.length === 0) return;
+            const tU = carrito.reduce((acc, i) => acc + i.precio, 0);
+            const tasa = parseFloat(document.getElementById('tasaBCV').value);
+            await addDoc(collection(db, "ventas"), { idBodega: ID, totalUSD: tU, totalBs: tU * tasa, fecha: serverTimestamp(), fechaStr: new Date().toLocaleDateString() });
+            carrito = []; document.getElementById('itemsCarrito').innerHTML = '<p id="carritoVacioMsg" class="text-center text-slate-300 py-2 italic">Sin productos marcados</p>';
+            document.getElementById('totalBs').innerText = "0.00 Bs"; document.getElementById('totalUSD').innerText = "Ref: 0.00$";
+            alert("Venta Cobrada ✅");
+        };
+
+        window.actualizarTasa = async () => { await setDoc(doc(db, "ajustes", ID), { tasa: parseFloat(document.getElementById('tasaBCV').value) }); alert("Tasa fijada"); };
+        window.agregarProducto = async () => {
+            const n = document.getElementById('nombreP').value, p = parseFloat(document.getElementById('precioP').value), s = parseInt(document.getElementById('stockP').value), id = document.getElementById('editId').value;
+            if(n) { if(id) await updateDoc(doc(db, "productos", id), { nombre: n, precioUSD: p, stock: s }); else await addDoc(collection(db, "productos"), { nombre: n, precioUSD: p, stock: s || 0, idBodega: ID }); location.reload(); }
+        };
+        window.prepararEdicion = (id, n, p, s) => { document.querySelector('details').open = true; document.getElementById('editId').value = id; document.getElementById('nombreP').value = n; document.getElementById('precioP').value = p; document.getElementById('stockP').value = s; };
+    </script>
+</body>
+          </html>
+                  
